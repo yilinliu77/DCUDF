@@ -208,7 +208,7 @@ class dcudf:
 
         self.query_func = query_func
 
-    def optimize(self, v_udf=None):
+    def optimize(self, v_udf=None, device=None):
         query_func = self.query_func
 
         if v_udf is not None:
@@ -226,12 +226,12 @@ class dcudf:
         )
 
         # init points
-        xyz = torch.from_numpy(self.mesh.vertices.astype(np.float32)).cuda()
+        xyz = torch.from_numpy(self.mesh.vertices.astype(np.float32)).to(device)
         xyz.requires_grad = True
         # set optimizer to xyz
         self.optimizer = VectorAdam([xyz])
         # init laplacian operation
-        laplacian_op = laplacian_calculation(self.mesh).cuda()
+        laplacian_op = laplacian_calculation(self.mesh).to(device)
 
         vertex_faces = np.asarray(self.mesh.vertex_faces)
         face_mask = np.ones_like(vertex_faces).astype(bool)
@@ -244,7 +244,7 @@ class dcudf:
                 normal_mesh = trimesh.Trimesh(
                     vertices=points, faces=self.mesh.faces, process=False
                 )
-                normals = torch.FloatTensor(normal_mesh.face_normals).cuda()
+                normals = torch.FloatTensor(normal_mesh.face_normals).to(device)
                 origin_points = get_mid(xyz, self.mesh.faces).detach().clone()
 
             self.update_learning_rate(it)
